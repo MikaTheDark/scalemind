@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+# les modèles PyTorch complets se régénèrent avec `python -m scalemind.train`
+models/*.zip
+models/sweep/
+logs/

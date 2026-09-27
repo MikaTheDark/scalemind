@@ -1,0 +1,578 @@
+<meta charset="utf-8">
+<title>ScaleMind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Silkscreen:wght@400;700&family=Press+Start+2P&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b1114;
+    --panel: #121b1f;
+    --panel-2: #182429;
+    --line: #243338;
+    --ink: #e4ece9;
+    --ink-2: #a9b8b4;
+    --muted: #71827e;
+    --accent: #3ddc84;
+    --accent-ink: #04130b;
+    --warn: #f5b53d;
+    --bad: #ff5a4f;
+    --s-left: #3f7fd9;
+    --s-right: #c4850f;
+    --s-need: #52615d;
+    --s-you: #c255bd;
+    --f-display: "Silkscreen", "Press Start 2P", ui-monospace, monospace;
+    --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.5 var(--f-body); padding-inline: 16px; padding-block: 20px 48px; margin: 0; }
+  .wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 18px; }
+
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; }
+  h1 { font: 700 clamp(30px, 5vw, 46px)/1 var(--f-display); margin: 0; letter-spacing: 0.02em; }
+  h1 span { color: var(--accent); }
+  .lede { margin: 8px 0 0; color: var(--ink-2); max-width: 70ch; text-wrap: balance; }
+  .lede b { color: var(--ink); font-weight: 600; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font: 12px var(--f-mono); color: var(--ink-2); border: 1px solid var(--line); padding: 3px 8px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; }
+  .field { display: grid; gap: 4px; }
+  .field label { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  select, .btn, .seg button { font: 500 14px var(--f-body); color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); padding: 8px 12px; border-radius: 2px; }
+  select { padding-right: 28px; }
+  .btn { cursor: pointer; font-weight: 600; }
+  .btn:hover, select:hover { border-color: #3a5058; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.play { background: #2d1a31; border-color: #5d3566; color: #f3d6f2; }
+  .btn:focus-visible, select:focus-visible, .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); }
+  .seg button { border: 0; border-radius: 0; cursor: pointer; color: var(--ink-2); background: var(--panel-2); }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-checked="true"] { background: #25383e; color: var(--ink); }
+  .spacer { flex: 1; }
+
+  .arena { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 860px) { .arena { grid-template-columns: 1fr; } }
+  .room { background: var(--panel); border: 1px solid var(--line); display: grid; min-width: 0; }
+  .room-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .room-head h2 { margin: 0; font: 400 15px var(--f-display); display: flex; align-items: center; gap: 8px; }
+  .room-head h2 i { width: 10px; height: 10px; display: inline-block; }
+  .pill { font: 600 11px var(--f-mono); padding: 3px 7px; border-radius: 2px; }
+  .pill.ok { background: #123522; color: var(--accent); }
+  .pill.warn { background: #3a2a0c; color: var(--warn); }
+  .pill.bad { background: #3d1412; color: var(--bad); }
+  canvas.px { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; background: #0c1215; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+  .stat { padding: 8px 12px; min-width: 0; }
+  .stat + .stat { border-left: 1px solid var(--line); }
+  .stat .l { font-size: 11px; color: var(--muted); }
+  .stat .v { font: 600 19px var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stat .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .budget { padding: 8px 12px 12px; border-top: 1px solid var(--line); display: grid; gap: 5px; }
+  .budget .top { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); }
+  .budget .top b { font: 600 12px var(--f-mono); color: var(--ink); }
+  .gauge { height: 10px; background: #0c1215; border: 1px solid var(--line); position: relative; }
+  .gauge i { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+  .gauge em { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink-2); }
+
+  .verdict { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: center; background: var(--panel); border: 1px solid var(--line); padding: 12px 16px; text-align: center; }
+  .verdict .big { font: 400 22px var(--f-display); }
+  .verdict .sub { color: var(--ink-2); font-size: 14px; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); padding: 14px 16px; min-width: 0; }
+  .card h3 { margin: 0 0 2px; font: 400 16px var(--f-display); }
+  .card .sub { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 16px; height: 10px; display: inline-block; }
+  .legend i.line { height: 0; border-top: 2px solid; }
+  .chartbox { position: relative; }
+  #timeline { display: block; width: 100%; height: 200px; cursor: pointer; }
+  .tip { position: absolute; pointer-events: none; background: #070b0d; border: 1px solid #34494f; padding: 7px 9px; font: 12px/1.5 var(--f-mono); min-width: 190px; z-index: 2; }
+  .tip b { font-family: var(--f-body); display: block; }
+  .tip .r { display: flex; justify-content: space-between; gap: 10px; color: var(--ink-2); }
+  .tip .r span:last-child { color: var(--ink); }
+
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
+  @media (max-width: 960px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th { text-align: right; font-weight: 500; color: var(--muted); font-size: 12px; padding: 4px 6px 6px; white-space: nowrap; }
+  td { padding: 7px 6px; border-top: 1px solid var(--line); text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; font-family: var(--f-body); }
+  td .sw { display: inline-block; width: 9px; height: 9px; margin-right: 7px; }
+  tr.best td { color: var(--accent); }
+  tr.ref td { color: var(--muted); }
+  .how p { margin: 0 0 8px; color: var(--ink-2); font-size: 14px; max-width: 70ch; }
+  .how p b { color: var(--ink); }
+  .how code { font: 13px var(--f-mono); color: var(--ink); }
+
+  .ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); background: #1a1420; }
+  .ctrl .btn { min-width: 52px; }
+  .ctrl .hint { font-size: 12px; color: var(--ink-2); flex: 1 1 200px; }
+  .ctrl .hint b { color: var(--ink); font-family: var(--f-mono); }
+  footer { text-align: center; color: var(--muted); font-size: 12px; }
+  .loading { padding: 40px; text-align: center; color: var(--ink-2); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Scale<span>Mind</span></h1>
+      <p class="lede">Un agent de <b>reinforcement learning</b> pilote l'autoscaling d'un cluster cloud sur le <b>vrai trafic horaire de Wikipédia en 2024</b>. Il doit payer le moins de serveurs possible sans épuiser le <b>budget d'erreur</b> de son SLO. Voici le rejeu, heure par heure, face à une règle classique.</p>
+    </div>
+    <div class="tags"><span class="tag">PPO · Q-learning</span><span class="tag">Gymnasium</span><span class="tag">SLO / error budget</span><span class="tag">FastAPI · Docker</span></div>
+  </header>
+
+  <div class="toolbar" role="group" aria-label="Contrôles du rejeu">
+    <div class="field"><label for="selSeries">Trafic réel</label><select id="selSeries"></select></div>
+    <div class="field"><label for="selLeft">Adversaire</label><select id="selLeft"></select></div>
+    <div class="field"><label for="selRight">Agent RL</label><select id="selRight"></select></div>
+    <div class="field"><label>Vitesse</label>
+      <div class="seg" role="radiogroup" aria-label="Vitesse">
+        <button type="button" role="radio" data-speed="2" aria-checked="false">2 h/s</button>
+        <button type="button" role="radio" data-speed="8" aria-checked="true">8 h/s</button>
+        <button type="button" role="radio" data-speed="48" aria-checked="false">2 j/s</button>
+      </div>
+    </div>
+    <button class="btn primary" id="btnPlay" type="button">❚❚ Pause</button>
+    <button class="btn" id="btnRestart" type="button">↺ Début</button>
+    <span class="spacer"></span>
+    <button class="btn play" id="btnDuel" type="button">Jouer l'autoscaler</button>
+  </div>
+
+  <div id="app" class="loading">Chargement du rejeu…</div>
+
+  <div id="main" hidden style="display:grid;gap:18px">
+    <div class="arena">
+      <section class="room" id="roomL" aria-label="Salle serveurs de l'adversaire">
+        <div class="room-head"><h2><i style="background:var(--s-left)" id="swL"></i><span id="nameL">—</span></h2><span class="pill ok" id="pillL">OK</span></div>
+        <canvas class="px" id="cvL" width="640" height="360"></canvas>
+        <div class="stats">
+          <div class="stat"><div class="l">Coût cumulé</div><div class="v" id="costL">0 €</div></div>
+          <div class="stat"><div class="l">Capacité / besoin</div><div class="v" id="capL">—</div></div>
+          <div class="stat"><div class="l">Heures saines</div><div class="v" id="okL">—</div></div>
+        </div>
+        <div class="budget"><div class="top"><span>Budget d'erreur (fenêtre de 30 j)</span><b id="budL">—</b></div><div class="gauge"><i id="gL"></i><em id="tL"></em></div></div>
+        <div class="ctrl" id="ctrl" hidden>
+          <button class="btn" type="button" data-d="-4">−4</button>
+          <button class="btn" type="button" data-d="-1">−1</button>
+          <button class="btn" type="button" data-d="1">+1</button>
+          <button class="btn" type="button" data-d="4">+4</button>
+          <span class="hint">Heure suivante : <b id="youNext">—</b> instances · prévision du besoin : <b id="youFc">—</b>. Touches ← → (±1) et ↑ ↓ (±4).</span>
+        </div>
+      </section>
+      <section class="room" id="roomR" aria-label="Salle serveurs de l'agent RL">
+        <div class="room-head"><h2><i style="background:var(--s-right)"></i><span id="nameR">—</span></h2><span class="pill ok" id="pillR">OK</span></div>
+        <canvas class="px" id="cvR" width="640" height="360"></canvas>
+        <div class="stats">
+          <div class="stat"><div class="l">Coût cumulé</div><div class="v" id="costR">0 €</div></div>
+          <div class="stat"><div class="l">Capacité / besoin</div><div class="v" id="capR">—</div></div>
+          <div class="stat"><div class="l">Heures saines</div><div class="v" id="okR">—</div></div>
+        </div>
+        <div class="budget"><div class="top"><span>Budget d'erreur (fenêtre de 30 j)</span><b id="budR">—</b></div><div class="gauge"><i id="gR"></i><em id="tR"></em></div></div>
+      </section>
+    </div>
+
+    <div class="verdict" aria-live="polite"><span class="big" id="verdict">—</span><span class="sub" id="verdictSub"></span></div>
+
+    <section class="card">
+      <h3>Le trafic et les décisions</h3>
+      <p class="sub">Besoin réel en instances (trafic ÷ 85 % d'utilisation cible) et capacité choisie par chaque politique. Cliquez pour vous déplacer dans le temps.</p>
+      <div class="legend">
+        <span><i style="background:var(--s-need)"></i>Besoin réel</span>
+        <span><i class="line" style="border-color:var(--s-left)" id="lgL"></i><span id="lgLn">Adversaire</span></span>
+        <span><i class="line" style="border-color:var(--s-right)"></i><span id="lgRn">Agent RL</span></span>
+      </div>
+      <div class="chartbox"><canvas id="timeline"></canvas><div class="tip" id="tip" hidden></div></div>
+    </section>
+
+    <div class="grid2">
+      <section class="card">
+        <h3>Résultats sur toute l'année 2024</h3>
+        <p class="sub">5 Wikipédias, 8 784 heures chacune, jamais vues à l'entraînement (modèles entraînés sur 2023, baselines réglées sur 2023).</p>
+        <div class="scroll"><table id="board"><thead><tr><th>Politique</th><th>Coût total</th><th>vs règle SRE</th><th>Heures saines</th><th>H hors budget</th><th>Utilisation</th></tr></thead><tbody></tbody></table></div>
+      </section>
+      <section class="card how">
+        <h3>Ce qui se joue</h3>
+        <p><b>Chaque heure</b>, l'autoscaler décide combien de serveurs tourneront l'heure suivante. Les nouveaux serveurs mettent du temps à démarrer : il faut <b>anticiper</b> la montée du trafic.</p>
+        <p><b>Le SLO</b> exige 97 % d'heures saines par mois, soit un <b>budget d'erreur</b> d'environ 21 heures dégradées. Tant qu'il en reste, on peut tourner serré. Une fois épuisé, chaque heure dégradée coûte 15 €.</p>
+        <p><b>L'agent RL</b> s'appuie sur la même prévision saisonnière que la règle SRE, mais il a appris seul <b>quelle marge prendre</b>, selon l'heure, les erreurs récentes de prévision et l'état du budget.</p>
+        <p>Salle serveurs : <b style="color:var(--accent)">vert</b> = serveur actif, <b style="color:var(--warn)">ambre</b> = en démarrage, <b style="color:var(--bad)">rouge</b> = surcharge. Les paquets tombent de l'« internet » vers le répartiteur de charge (LB).</p>
+      </section>
+    </div>
+  </div>
+  <footer>Données : Wikimedia Pageviews API (CC0), trafic horaire 2023-2024 · Simulation et entraînement : Python, Gymnasium, stable-baselines3</footer>
+</div>
+
+<script src="data/replay.js"></script>
+<script>
+(() => {
+"use strict";
+const R = window.REPLAY;
+const app = document.getElementById("app");
+if (!R) { app.textContent = "Données absentes : lancez « python -m scalemind.train » pour générer web/data/replay.js."; return; }
+app.hidden = true;
+document.getElementById("main").hidden = false;
+
+const CFG = R.config;
+const BUDGET = (1 - CFG.slo_target) * CFG.window_hours;
+const SERIES = Object.keys(R.series);
+const POLICIES = Object.keys(R.series[SERIES[0]].instances);
+const RL_NAMES = POLICIES.filter(p => /PPO|DQN|Q-learning/.test(p));
+const REFS = POLICIES.filter(p => !RL_NAMES.includes(p));
+const YOU = "Vous (mode joueur)";
+const LABEL = s => ({ "fr.wikipedia": "Wikipédia FR", "en.wikipedia": "Wikipédia EN", "de.wikipedia": "Wikipédia DE", "es.wikipedia": "Wikipédia ES", "ja.wikipedia": "Wikipédia JA" }[s] || s);
+const fmt = (x, d = 0) => x.toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+/* ---------------- sélecteurs ---------------- */
+const selSeries = document.getElementById("selSeries"), selLeft = document.getElementById("selLeft"), selRight = document.getElementById("selRight");
+selSeries.innerHTML = SERIES.map(s => `<option value="${s}">${LABEL(s)}</option>`).join("");
+selLeft.innerHTML = REFS.map(p => `<option>${p}</option>`).join("");
+selRight.innerHTML = RL_NAMES.map(p => `<option>${p}</option>`).join("");
+const bestRL = RL_NAMES.slice().sort((a, b) => R.summary[a].total_cost - R.summary[b].total_cost)[0];
+selRight.value = bestRL || RL_NAMES[0];
+selLeft.value = REFS.includes("Prévision + règle SRE") ? "Prévision + règle SRE" : REFS[0];
+
+/* ---------------- simulation de coûts (mêmes règles que l'environnement Python) ---------------- */
+function simulate(demand, inst, start, len, windowH) {
+  const out = { cum: new Float64Array(len), budget: new Float64Array(len), degraded: new Uint8Array(len), over: new Uint8Array(len), healthy: new Float64Array(len) };
+  let cost = 0, deg = 0, okCount = 0;
+  for (let j = 0; j < len; j++) {
+    const i = start + j;
+    if (j % windowH === 0) deg = 0;
+    const n = inst[i], d = demand[i];
+    const started = j > 0 ? Math.max(0, n - inst[i - 1]) : 0;
+    const degraded = d > CFG.target_util * n;
+    deg += degraded;
+    const over = degraded && deg > (1 - CFG.slo_target) * windowH;
+    cost += n * CFG.price_per_hour + started * CFG.boot_cost + (over ? CFG.over_budget_penalty : 0) + Math.max(0, d - n) * CFG.drop_cost;
+    okCount += !degraded;
+    out.cum[j] = cost; out.degraded[j] = degraded; out.over[j] = over;
+    out.budget[j] = (1 - CFG.slo_target) * windowH - deg;
+    out.healthy[j] = okCount / (j + 1);
+  }
+  return out;
+}
+
+/* ---------------- état ---------------- */
+const S = { series: SERIES[0], pos: 0, speed: 8, playing: !matchMedia("(prefers-reduced-motion: reduce)").matches, duel: null };
+let D, simL, simR;
+function load() {
+  D = R.series[S.series];
+  const L = S.duel ? null : D.instances[selLeft.value];
+  simR = simulate(D.demand, D.instances[selRight.value], 0, D.demand.length, CFG.window_hours);
+  simL = L ? simulate(D.demand, L, 0, D.demand.length, CFG.window_hours) : null;
+  document.getElementById("nameL").textContent = S.duel ? YOU : selLeft.value;
+  document.getElementById("nameR").textContent = selRight.value;
+  document.getElementById("lgLn").textContent = S.duel ? "Vous" : selLeft.value;
+  document.getElementById("lgRn").textContent = selRight.value;
+  const leftCol = S.duel ? "var(--s-you)" : "var(--s-left)";
+  document.getElementById("swL").style.background = leftCol;
+  document.getElementById("lgL").style.borderColor = leftCol;
+  chartDirty = true;
+}
+
+/* ---------------- dessin pixel art ---------------- */
+const P = 2;
+const W = 320, H = 180;
+const SLOTS = 40, RACKS = 5, ROWS = 8;
+function room(canvas) {
+  const g = canvas.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  return { canvas, g, packets: [], drops: [], acc: 0 };
+}
+const rooms = { L: room(document.getElementById("cvL")), R: room(document.getElementById("cvR")) };
+
+function rect(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, Math.round(w) * P, Math.round(h) * P); }
+function text(g, s, x, y, c, align = "left") { g.font = '8px "Press Start 2P", monospace'; g.fillStyle = c; g.textAlign = align; g.textBaseline = "top"; g.fillText(s, Math.round(x * P), Math.round(y * P)); }
+
+function slotXY(j) {
+  const rack = j % RACKS, row = ROWS - 1 - Math.floor(j / RACKS);
+  return { x: 22 + rack * 58, y: 62 + row * 14 };
+}
+
+const DAYS = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
+function clockLabel(ts) {
+  const d = new Date(ts.replace("T", " ").slice(0, 13) + ":00:00Z");
+  return `${DAYS[d.getUTCDay()]} ${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")} ${String(d.getUTCHours()).padStart(2, "0")}H`;
+}
+
+let clock = 0;
+function drawRoom(rm, i, frac, n, prevN, d, degraded, over, dt) {
+  const g = rm.g;
+  // décor
+  rect(g, 0, 0, W, H, "#0c1215");
+  for (let x = 0; x < W; x += 16) rect(g, x, 30, 1, H - 30, "#101a1d");
+  rect(g, 0, 0, W, 30, "#111b1f");
+  rect(g, 0, 30, W, 2, "#1d2b30");
+  // internet
+  const cx = 160;
+  [[-14, 6, 28, 8], [-20, 10, 40, 8], [-8, 3, 16, 6]].forEach(([ox, oy, w, h]) => rect(g, cx + ox, oy, w, h, "#2c4047"));
+  text(g, "INTERNET", cx, 20, "#6f8a86", "center");
+  // répartiteur de charge
+  rect(g, cx - 14, 38, 28, 10, "#1f2e33");
+  rect(g, cx - 12, 40, 24, 6, "#12191c");
+  text(g, "LB", cx, 40, degraded ? "#ff5a4f" : "#3ddc84", "center");
+  // câbles vers les baies
+  for (let r = 0; r < RACKS; r++) { const x = 22 + r * 58 + 22; rect(g, x, 48, 1, 12, "#1a282d"); }
+  rect(g, 44, 52, 232, 1, "#1a282d");
+  // serveurs
+  const util = n > 0 ? d / n : 2;
+  for (let j = 0; j < SLOTS; j++) {
+    const { x, y } = slotXY(j);
+    const on = j < n, booting = on && j >= prevN;
+    rect(g, x, y, 46, 11, on ? (degraded ? "#2b1717" : "#1b262a") : "#0f1619");
+    rect(g, x + 1, y + 1, 30, 9, on ? "#141d20" : "#0c1215");
+    for (let k = 0; k < 3; k++) rect(g, x + 3, y + 2 + k * 3, 24, 1, on ? "#223238" : "#111a1d");
+    // LED d'activité : clignote plus vite quand l'utilisation monte
+    let c = "#16211f";
+    if (booting && frac < 0.35) c = Math.floor(clock * 8) % 2 ? "#f5b53d" : "#6a4a14";
+    else if (on) {
+      const hz = 2 + util * 10;
+      const blink = Math.floor(clock * hz + j * 1.7) % 3 !== 0;
+      c = degraded ? (blink ? "#ff5a4f" : "#6b1e1a") : (blink ? "#3ddc84" : "#155c35");
+    }
+    rect(g, x + 35, y + 3, 3, 3, c);
+    rect(g, x + 40, y + 3, 3, 3, on ? (degraded ? "#ff8a7f" : "#2a8f59") : "#16211f");
+  }
+  // paquets : débit proportionnel à la demande
+  rm.acc += dt * d * 2.2;
+  while (rm.acc > 1) {
+    rm.acc -= 1;
+    const dropped = n <= 0 || Math.random() < Math.max(0, (d - n) / d);
+    const tgt = Math.floor(Math.random() * Math.max(1, Math.min(n, SLOTS)));
+    rm.packets.push({ x: cx + (Math.random() - 0.5) * 20, y: 14, phase: 0, tgt, dropped, t: 0 });
+  }
+  const speed = 90;
+  for (let k = rm.packets.length - 1; k >= 0; k--) {
+    const p = rm.packets[k];
+    if (p.phase === 0) { p.y += speed * dt; p.x += (cx - p.x) * Math.min(1, dt * 6); if (p.y >= 42) { p.phase = p.dropped ? 2 : 1; p.vx = (Math.random() - 0.5) * 80; } }
+    else if (p.phase === 1) {
+      const s = slotXY(p.tgt), tx = s.x + 36, ty = s.y + 4;
+      const dx = tx - p.x, dy = ty - p.y, dist = Math.hypot(dx, dy);
+      if (dist < 3) { rm.packets.splice(k, 1); continue; }
+      p.x += dx / dist * speed * 1.4 * dt; p.y += dy / dist * speed * 1.4 * dt;
+    } else { p.x += p.vx * dt; p.y += speed * 1.2 * dt; if (p.y > H) { rm.packets.splice(k, 1); continue; } }
+    rect(g, p.x, p.y, 2, 2, p.phase === 2 ? "#ff5a4f" : "#9fd3ff");
+  }
+  if (rm.packets.length > 220) rm.packets.splice(0, rm.packets.length - 220);
+  // alarmes
+  if (degraded) {
+    const on = Math.floor(clock * 4) % 2;
+    rect(g, 6, 6, 8, 8, on ? "#ff5a4f" : "#5a1a16");
+    rect(g, 8, 4, 4, 2, "#8a8f8e");
+    text(g, over ? "HORS BUDGET" : "SURCHARGE", 18, 8, on ? "#ff5a4f" : "#b8433b");
+  }
+  text(g, clockLabel(D.timestamps[i]), W - 4, 8, "#a9b8b4", "right");
+  text(g, `${n} INST.`, W - 4, 18, "#71827e", "right");
+}
+
+/* ---------------- panneaux ---------------- */
+function setPill(el, degraded, over) {
+  el.className = "pill " + (over ? "bad" : degraded ? "warn" : "ok");
+  el.textContent = over ? "HORS BUDGET" : degraded ? "DÉGRADÉ" : "SAIN";
+}
+function setBudget(side, left, i) {
+  const pct = Math.max(0, left) / BUDGET;
+  const g = document.getElementById("g" + side);
+  g.style.width = (pct * 100).toFixed(1) + "%";
+  g.style.background = pct > 0.5 ? "var(--accent)" : pct > 0.2 ? "var(--warn)" : "var(--bad)";
+  document.getElementById("t" + side).style.left = ((1 - (i % CFG.window_hours) / CFG.window_hours) * 100).toFixed(1) + "%";
+  document.getElementById("bud" + side).textContent = left >= 0 ? `${fmt(left, 1)} h / ${fmt(BUDGET, 1)} h` : `épuisé (${fmt(-left, 0)} h au-delà)`;
+}
+function panel(side, sim, inst, i) {
+  const j = S.duel && side === "L" ? i - S.duel.start : i;
+  if (!sim || j < 0) return;
+  document.getElementById("cost" + side).innerHTML = `${fmt(sim.cum[j])} <small>€</small>`;
+  document.getElementById("cap" + side).innerHTML = `${inst[i]} <small>/ ${fmt(D.demand[i] / CFG.target_util, 1)}</small>`;
+  document.getElementById("ok" + side).innerHTML = `${fmt(sim.healthy[j] * 100, 1)} <small>%</small>`;
+  setPill(document.getElementById("pill" + side), sim.degraded[j], sim.over[j]);
+  setBudget(side, sim.budget[j], S.duel && side === "L" ? j : i);
+}
+function verdict(i) {
+  const el = document.getElementById("verdict"), sub = document.getElementById("verdictSub");
+  if (S.duel) {
+    const j = i - S.duel.start, you = S.duel.sim.cum[Math.max(0, j)], bot = S.duel.botSim.cum[Math.max(0, j)];
+    const diff = you - bot;
+    el.textContent = diff > 0 ? `L'agent mène de ${fmt(diff)} €` : diff < 0 ? `Vous menez de ${fmt(-diff)} €` : "Égalité";
+    el.style.color = diff > 0 ? "var(--s-right)" : "#e79be5";
+    sub.textContent = `Heure ${j + 1} sur ${S.duel.len} · même trafic, même budget d'erreur (${fmt((1 - CFG.slo_target) * S.duel.len, 1)} h)`;
+    return;
+  }
+  const diff = simL.cum[i] - simR.cum[i];
+  el.textContent = diff >= 0 ? `L'agent économise ${fmt(diff)} € (−${fmt(100 * diff / Math.max(1, simL.cum[i]), 1)} %)` : `L'agent coûte ${fmt(-diff)} € de plus`;
+  el.style.color = diff >= 0 ? "var(--accent)" : "var(--warn)";
+  sub.textContent = `depuis le ${D.timestamps[0].slice(0, 10)}, face à « ${selLeft.value} », sur ${LABEL(S.series)}`;
+}
+
+/* ---------------- frise temporelle ---------------- */
+const tl = document.getElementById("timeline"), tg = tl.getContext("2d"), tip = document.getElementById("tip");
+let chartDirty = true, hoverI = -1, geom = null;
+function drawTimeline(i) {
+  const r = tl.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+  if (!r.width) return;
+  if (tl.width !== Math.round(r.width * dpr)) { tl.width = Math.round(r.width * dpr); tl.height = Math.round(r.height * dpr); }
+  tg.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const Wc = r.width, Hc = r.height, pad = { l: 32, r: 8, t: 8, b: 22 };
+  tg.clearRect(0, 0, Wc, Hc);
+  const lo = S.duel ? S.duel.start : 0, hi = S.duel ? S.duel.start + S.duel.len : D.demand.length;
+  const need = D.demand.slice(lo, hi).map(d => d / CFG.target_util);
+  const L = S.duel ? S.duel.inst : D.instances[selLeft.value], Rr = D.instances[selRight.value];
+  const ymax = Math.ceil(Math.max(...need, ...Rr.slice(lo, hi)) / 5) * 5 + 2;
+  const X = k => pad.l + ((k - lo) / (hi - lo - 1)) * (Wc - pad.l - pad.r), Y = v => pad.t + (1 - v / ymax) * (Hc - pad.t - pad.b);
+  geom = { X, lo, hi, pad, Wc };
+  tg.font = '11px "JetBrains Mono", monospace'; tg.textAlign = "right"; tg.textBaseline = "middle";
+  for (let v = 0; v <= ymax; v += 10) { tg.strokeStyle = "#1c292d"; tg.beginPath(); tg.moveTo(pad.l, Y(v) + 0.5); tg.lineTo(Wc - pad.r, Y(v) + 0.5); tg.stroke(); tg.fillStyle = "#71827e"; tg.fillText(v, pad.l - 5, Y(v)); }
+  tg.textAlign = "left"; tg.textBaseline = "top";
+  for (let k = lo; k < hi; k++) if (D.timestamps[k].endsWith("T00") && (hi - lo < 400 || new Date(D.timestamps[k].slice(0, 10)).getUTCDay() === 1)) {
+    tg.fillStyle = "#1c292d"; tg.fillRect(Math.round(X(k)), pad.t, 1, Hc - pad.t - pad.b);
+    tg.fillStyle = "#71827e"; tg.fillText(D.timestamps[k].slice(5, 10).split("-").reverse().join("/"), X(k) + 3, Hc - pad.b + 5);
+  }
+  // besoin : aire
+  tg.fillStyle = "#34413e"; tg.beginPath(); tg.moveTo(X(lo), Y(0));
+  for (let k = lo; k < hi; k++) tg.lineTo(X(k), Y(need[k - lo]));
+  tg.lineTo(X(hi - 1), Y(0)); tg.closePath(); tg.fill();
+  const line = (arr, col, until) => { tg.strokeStyle = col; tg.lineWidth = 1.6; tg.beginPath(); for (let k = lo; k < until; k++) { const x = X(k), y = Y(arr[k]); k === lo ? tg.moveTo(x, y) : tg.lineTo(x, y); } tg.stroke(); };
+  line(L, S.duel ? "#c255bd" : "#3f7fd9", S.duel ? Math.min(hi, i + 1) : hi);
+  line(Rr, "#c4850f", hi);
+  // heures dégradées de l'agent : marques au pied
+  const simA = S.duel ? S.duel.botSim : simR;
+  tg.fillStyle = "#ff5a4f";
+  for (let k = lo; k < hi; k++) if (simA.degraded[k - (S.duel ? lo : 0)]) tg.fillRect(Math.round(X(k)), Hc - pad.b - 3, 1.5, 3);
+  // tête de lecture
+  tg.fillStyle = "#e4ece9"; tg.fillRect(Math.round(X(i)), pad.t, 2, Hc - pad.t - pad.b);
+  if (hoverI >= lo && hoverI < hi) { tg.fillStyle = "#a9b8b4"; tg.fillRect(Math.round(X(hoverI)), pad.t, 1, Hc - pad.t - pad.b); }
+}
+function idxAt(ev) {
+  const r = tl.getBoundingClientRect(), x = ev.clientX - r.left;
+  return Math.max(geom.lo, Math.min(geom.hi - 1, Math.round(geom.lo + ((x - geom.pad.l) / (geom.Wc - geom.pad.l - geom.pad.r)) * (geom.hi - geom.lo - 1))));
+}
+tl.addEventListener("pointermove", ev => {
+  if (!geom) return;
+  const k = idxAt(ev); hoverI = k;
+  const L = S.duel ? S.duel.inst : D.instances[selLeft.value];
+  tip.innerHTML = `<b>${clockLabel(D.timestamps[k]).toLowerCase()}</b>
+    <div class="r"><span>Besoin réel</span><span>${fmt(D.demand[k] / CFG.target_util, 1)}</span></div>
+    <div class="r"><span>${S.duel ? "Vous" : "Adversaire"}</span><span>${k <= S.pos || !S.duel ? L[k] : "—"}</span></div>
+    <div class="r"><span>Agent RL</span><span>${D.instances[selRight.value][k]}</span></div>`;
+  tip.hidden = false;
+  const r = tl.getBoundingClientRect(), x = geom.X(k);
+  tip.style.left = Math.max(0, Math.min(r.width - tip.offsetWidth, x + 12)) + "px"; tip.style.top = "4px";
+});
+tl.addEventListener("pointerleave", () => { hoverI = -1; tip.hidden = true; });
+tl.addEventListener("click", ev => { if (geom && !S.duel) S.pos = idxAt(ev); });
+
+/* ---------------- tableau des résultats ---------------- */
+function board() {
+  const names = Object.keys(R.summary);
+  const ref = R.summary["Prévision + règle SRE"];
+  const bestReal = names.filter(n => !/Oracle/.test(n)).sort((a, b) => R.summary[a].total_cost - R.summary[b].total_cost)[0];
+  const colors = { [selRight.value]: "#c4850f" };
+  document.querySelector("#board tbody").innerHTML = names.sort((a, b) => R.summary[a].total_cost - R.summary[b].total_cost).map(n => {
+    const s = R.summary[n], vs = ref ? (100 * (s.total_cost - ref.total_cost) / ref.total_cost) : 0;
+    const cls = /Oracle/.test(n) ? "ref" : n === bestReal ? "best" : "";
+    const sw = RL_NAMES.includes(n) ? "#c4850f" : /Oracle/.test(n) ? "#4a5a57" : "#3f7fd9";
+    return `<tr class="${cls}"><td><span class="sw" style="background:${colors[n] || sw}"></span>${n}${/Oracle/.test(n) ? " · borne idéale" : ""}</td><td>${fmt(s.total_cost)} €</td><td>${ref ? (vs > 0 ? "+" : "") + fmt(vs, 1) + " %" : "—"}</td><td>${fmt(s.healthy_pct, 1)} %</td><td>${fmt(s.over_budget_hours)}</td><td>${fmt(s.avg_util_pct, 0)} %</td></tr>`;
+  }).join("");
+}
+
+/* ---------------- mode joueur ---------------- */
+function forecastNeed(i) {
+  const d = D.demand;
+  if (i < 25) return d[i] / CFG.target_util;
+  return (d[i + 1 - 24] * d[i] / Math.max(1e-9, d[i - 24])) / CFG.target_util;
+}
+function startDuel() {
+  const len = 168, start = 24 + Math.floor(Math.random() * (D.demand.length - len - 30));
+  const inst = D.instances[selRight.value].slice();
+  const you = new Int32Array(D.demand.length);
+  you[start] = inst[start];
+  S.duel = { start, len, you, inst: you, next: inst[start], sim: null, botSim: simulate(D.demand, inst, start, len, len) };
+  S.pos = start; S.speed = 0.6; S.playing = true;
+  document.getElementById("ctrl").hidden = false;
+  document.getElementById("btnDuel").textContent = "Quitter le duel";
+  recomputeYou();
+  load(); syncSpeed();
+}
+function stopDuel() {
+  S.duel = null; S.speed = 8;
+  document.getElementById("ctrl").hidden = true;
+  document.getElementById("btnDuel").textContent = "Jouer l'autoscaler";
+  load(); syncSpeed();
+}
+function recomputeYou() {
+  const du = S.duel, upto = Math.min(du.len, Math.floor(S.pos) - du.start + 1);
+  du.sim = simulate(D.demand, du.you, du.start, Math.max(1, upto), du.len);
+}
+document.querySelectorAll("#ctrl [data-d]").forEach(b => b.addEventListener("click", () => nudge(+b.dataset.d)));
+document.addEventListener("keydown", ev => {
+  if (!S.duel) return;
+  const m = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: 4, ArrowDown: -4 }[ev.key];
+  if (m) { ev.preventDefault(); nudge(m); }
+});
+function nudge(d) { S.duel.next = Math.max(CFG.min_instances, Math.min(CFG.max_instances, S.duel.next + d)); }
+
+/* ---------------- contrôles ---------------- */
+const btnPlay = document.getElementById("btnPlay");
+function syncSpeed() {
+  btnPlay.textContent = S.playing ? "❚❚ Pause" : "▶ Lecture";
+  document.querySelectorAll(".seg button").forEach(b => { b.setAttribute("aria-checked", String(+b.dataset.speed === S.speed)); b.disabled = !!S.duel; });
+}
+btnPlay.addEventListener("click", () => { S.playing = !S.playing; syncSpeed(); });
+document.getElementById("btnRestart").addEventListener("click", () => { if (S.duel) startDuel(); else S.pos = 0; });
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => { S.speed = +b.dataset.speed; S.playing = true; syncSpeed(); }));
+selSeries.addEventListener("change", () => { S.series = selSeries.value; if (S.duel) stopDuel(); S.pos = 0; load(); });
+selLeft.addEventListener("change", () => load());
+selRight.addEventListener("change", () => { load(); board(); });
+document.getElementById("btnDuel").addEventListener("click", () => (S.duel ? stopDuel() : startDuel()));
+addEventListener("resize", () => { chartDirty = true; });
+
+/* ---------------- boucle ---------------- */
+load(); board(); syncSpeed();
+let last = performance.now(), lastI = -1, frame = 0;
+function loop(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now; clock += dt; frame++;
+  const end = S.duel ? S.duel.start + S.duel.len - 1 : D.demand.length - 1;
+  if (S.playing) {
+    const before = Math.floor(S.pos);
+    S.pos = Math.min(end, S.pos + dt * S.speed);
+    if (S.duel && Math.floor(S.pos) > before) {
+      // l'heure bascule : votre commande devient la capacité de l'heure qui commence
+      for (let k = before + 1; k <= Math.floor(S.pos); k++) S.duel.you[k] = S.duel.next;
+      recomputeYou();
+    }
+    if (S.pos >= end) S.playing = false, syncSpeed();
+  }
+  const i = Math.floor(S.pos), frac = S.pos - i;
+  const Linst = S.duel ? S.duel.you : D.instances[selLeft.value], Rinst = D.instances[selRight.value];
+  const sL = S.duel ? S.duel.sim : simL, jL = S.duel ? i - S.duel.start : i;
+  drawRoom(rooms.L, i, frac, Linst[i], i > 0 ? Linst[i - 1] : Linst[i], D.demand[i], !!sL.degraded[Math.min(jL, sL.degraded.length - 1)], !!sL.over[Math.min(jL, sL.over.length - 1)], dt);
+  const jR = S.duel ? i - S.duel.start : i, sR = S.duel ? S.duel.botSim : simR;
+  drawRoom(rooms.R, i, frac, Rinst[i], i > 0 ? Rinst[i - 1] : Rinst[i], D.demand[i], !!sR.degraded[jR], !!sR.over[jR], dt);
+  if (i !== lastI || frame % 20 === 0) {
+    panel("L", sL, Linst, i);
+    if (S.duel) {
+      const j = i - S.duel.start;
+      document.getElementById("costR").innerHTML = `${fmt(sR.cum[j])} <small>€</small>`;
+      document.getElementById("capR").innerHTML = `${Rinst[i]} <small>/ ${fmt(D.demand[i] / CFG.target_util, 1)}</small>`;
+      document.getElementById("okR").innerHTML = `${fmt(sR.healthy[j] * 100, 1)} <small>%</small>`;
+      setPill(document.getElementById("pillR"), sR.degraded[j], sR.over[j]);
+      setBudget("R", sR.budget[j], j);
+      document.getElementById("youNext").textContent = S.duel.next;
+      document.getElementById("youFc").textContent = fmt(forecastNeed(i), 1);
+    } else panel("R", simR, Rinst, i);
+    verdict(i);
+    lastI = i; chartDirty = true;
+  }
+  if (chartDirty && frame % 2 === 0) { drawTimeline(i); chartDirty = false; }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
