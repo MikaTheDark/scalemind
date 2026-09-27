@@ -6,6 +6,8 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+**[▶ Voir la démo interactive](https://mikathedark.github.io/scalemind/)**
+
 > *English summary* — A PPO agent learns how much safety margin to provision on top of a seasonal
 > forecast, so that a cloud cluster serving real hourly Wikipedia traffic (5 languages, 2023 → 2024)
 > spends as little as possible while respecting a 97 % monthly SLO error budget. Trained on 2023,
@@ -170,7 +172,7 @@ uvicorn scalemind.serve:app --port 8000                  # API : http://localhos
 docker build -t scalemind-api . && docker run -p 8000:8000 scalemind-api
 ```
 
-**Visualisation** : ouvrez `web/index.html` dans un navigateur. C'est un rejeu en pixel art de 8 semaines de 2024 : deux salles serveurs face à face, coûts et budget d'erreur en direct, et un mode « Jouer l'autoscaler » pour affronter l'agent.
+**Visualisation** : [en ligne ici](https://mikathedark.github.io/scalemind/), ou ouvrez `web/index.html` dans un navigateur. C'est un rejeu en pixel art de 8 semaines de 2024 : deux salles serveurs face à face, coûts et budget d'erreur en direct, et un mode « Jouer l'autoscaler » pour affronter l'agent.
 
 ## Structure
 
